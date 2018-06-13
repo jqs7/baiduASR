@@ -31,8 +31,8 @@ func (ctl BaiduAI) WebService(ws biu.WS) {
 	ws.Route(ws.POST("/audio").
 		Doc("百度语音识别").
 		Consumes(biu.MIME_FILE_FORM).
-		Param(ws.FormParameter("file", "文件").DataType("file")).
-		Param(ws.FormParameter("token", "百度接口 token")).
+		Param(ws.FormParameter("file", "文件").DataType("file").Required(true)).
+		Param(ws.FormParameter("token", "百度接口 token").Required(true)).
 		Param(ws.FormParameter("devPid", "识别模式").DataType("integer")).
 		Param(ws.FormParameter("cuid", "用户标识")),
 		&biu.RouteOpt{
