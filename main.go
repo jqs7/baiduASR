@@ -31,8 +31,10 @@ func (ctl BaiduAI) WebService(ws biu.WS) {
 	ws.Route(ws.POST("/audio").
 		Doc("百度语音识别").
 		Consumes(biu.MIME_FILE_FORM).
-		Param(ws.FormParameter("file", "文件").DataType("file")).
-		Param(ws.FormParameter("token", "token")),
+		Param(ws.FormParameter("file", "文件").DataType("file").Required(true)).
+		Param(ws.FormParameter("token", "百度接口 token").Required(true)).
+		Param(ws.FormParameter("devPid", "识别模式").DataType("integer")).
+		Param(ws.FormParameter("cuid", "用户标识")),
 		&biu.RouteOpt{
 			ID: "baidu.ai.audio",
 			To: ctl.audio,
@@ -82,16 +84,27 @@ func (ctl BaiduAI) audio(ctx biu.Ctx) {
 	pcmData, err := ioutil.ReadFile(pcmFilename)
 	ctx.Must(err, 105)
 
+	cuid, _ := ctx.Form("cuid").String()
+	if cuid == "" {
+		cuid = "nyan"
+	}
+
+	devPID, _ := ctx.Form("devPid").Int()
+	if devPID != 1536 && devPID != 1537 && devPID != 1737 &&
+		devPID != 1637 && devPID != 1837 && devPID != 1936 {
+		devPID = 1537
+	}
+
 	pcmBase64 := base64.StdEncoding.EncodeToString(pcmData)
 	resp, err := grequests.Post("http://vop.baidu.com/server_api",
 		&grequests.RequestOptions{
 			JSON: BaiduAudio{
 				Format:  "pcm",
 				Rate:    16000,
-				DevPid:  1537,
+				DevPid:  devPID,
 				Channel: 1,
 				Token:   token,
-				Cuid:    "nyan",
+				Cuid:    cuid,
 				Len:     len(pcmData),
 				Speech:  pcmBase64,
 			},
