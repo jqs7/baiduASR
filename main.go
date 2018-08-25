@@ -12,6 +12,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/levigross/grequests"
 	"github.com/tuotoo/biu"
+	"github.com/tuotoo/biu/box"
+	"github.com/tuotoo/biu/log"
+	"github.com/tuotoo/biu/opt"
 )
 
 type BaiduAI struct{}
@@ -35,23 +38,22 @@ func (ctl BaiduAI) WebService(ws biu.WS) {
 		Param(ws.FormParameter("token", "百度接口 token").Required(true)).
 		Param(ws.FormParameter("devPid", "识别模式").DataType("integer")).
 		Param(ws.FormParameter("cuid", "用户标识")),
-		&biu.RouteOpt{
-			ID: "baidu.ai.audio",
-			To: ctl.audio,
-			Errors: map[int]string{
-				100: "获取文件失败",
-				101: "打开文件失败",
-				102: "创建文件失败",
-				103: "复制文件内容失败",
-				104: "文件转码失败",
-				105: "读取文件数据失败",
-				106: "获取 token 失败",
-				107: "访问百度 AI 接口失败",
-			},
-		})
+		opt.RouteID("baidu.ai.audio"),
+		opt.RouteTo(ctl.audio),
+		opt.RouteErrors(map[int]string{
+			100: "获取文件失败",
+			101: "打开文件失败",
+			102: "创建文件失败",
+			103: "复制文件内容失败",
+			104: "文件转码失败",
+			105: "读取文件数据失败",
+			106: "获取 token 失败",
+			107: "访问百度 AI 接口失败",
+		}),
+	)
 }
 
-func (ctl BaiduAI) audio(ctx biu.Ctx) {
+func (ctl BaiduAI) audio(ctx box.Ctx) {
 	_, fh, err := ctx.Request.Request.FormFile("file")
 	ctx.Must(err, 100)
 
@@ -118,7 +120,7 @@ func (ctl BaiduAI) audio(ctx biu.Ctx) {
 }
 
 func main() {
-	biu.UseColorLogger()
+	log.UseColorLogger()
 	restful.Filter(biu.LogFilter())
 	biu.AddServices("/v1", nil,
 		biu.NS{
@@ -132,5 +134,5 @@ func main() {
 		RoutePrefix: "/v1",
 	})
 	restful.Add(swaggerService)
-	biu.Run(":7093", nil)
+	biu.Run(":7093")
 }
